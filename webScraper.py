@@ -10,26 +10,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+chrome_options = webdriver.ChromeOptions()
+prefs = {'download.default_directory' : os.getcwd() + r"\Resources"}
+chrome_options.add_experimental_option('prefs', prefs)
+chrome_options.add_argument("--disable-notifications")
+
 # Setting important variables
 PATH = os.getcwd() + r"\Resources\chromedriver.exe"
 s = Service(PATH)
-driver = webdriver.Chrome(service = s)
+driver = webdriver.Chrome(PATH, options=chrome_options)
 wait = WebDriverWait(driver, 10)
 wallpaperPage = ""
 downloadName = ""
-
-# Disabling popup ads
-options = webdriver.ChromeOptions()
-capabilities = options.to_capabilities()
-capabilities = {
- 'browser': 'chrome',
- 'browser_version': 'latest',
- 'os': 'Windows',
- 'os_version': '10',
- 'build': 'Python Wallpaper of The Day',
- 'name': 'Pop-ups blocker'
-}
-capabilities["excludeSwitches"] = ["disable-popup-blocking"]
 
 # Opens the webpage
 driver.get("https://bing.gifposter.com/list/new/desc/classic.html?p=1")
@@ -91,17 +83,28 @@ print(driver.title)
 
 # Waiting until the page is loaded up
 try:
-    mainDiv = wait.until(
-        EC.presence_of_element_located((By.XPATH, "//div[@class='nav-btn']"))
-    )
+    cont = True
+    while(cont):
+        mainDiv = wait.until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='nav-btn']"))
+            )
 
-    print("Full Screen page has been loaded.")
+        print("Full Screen page has been loaded.")
 
-    # Downloading the wallpaper
-    downloadName = mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").get_attribute("download")
-    mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").click()
+        # Downloading the wallpaper
+        downloadName = mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").get_attribute("download")
+        mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").click()
 
-    time.sleep(3)
+        time.sleep(3)
+
+        numFiles = 0
+        for path in os.listdir(os.getcwd() + "\\Resources"):
+            numFiles += 1
+
+        if numFiles > 1:
+            cont = False
+
+        driver.navigate().refresh()
 
     print("Download Complete")
 
@@ -113,7 +116,5 @@ finally:
     driver.quit()
 
 # Set the wallpaper as desktop background
-realtive_path = os.path.relpath("\Downloads\{0}".format(downloadName))
-print(realtive_path)
-ctypes.windll.user32.SystemParametersInfoW(20,0,realtive_path,0)
+ctypes.windll.user32.SystemParametersInfoW(20,0, os.getcwd() + "\\Resources\\{0}".format(downloadName),0)
 print("Program Complete")
