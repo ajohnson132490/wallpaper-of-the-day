@@ -12,15 +12,22 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 #Setting download folder
 chrome_options = webdriver.ChromeOptions()
-prefs = {'download.default_directory' : os.getcwd() + r"\Resources"}
+prefs = {'download.default_directory' : os.getcwd()}
 chrome_options.add_experimental_option('prefs', prefs)
 chrome_options.add_argument("--disable-notifications")
 
+#Creating a path where the chromedriver resource is
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, relative_path)
 
 # Setting important variables
-PATH = os.getcwd() + r"\Resources\chromedriver.exe"
+PATH = os.getcwd() + r"chromedriver.exe"
 s = Service(PATH)
-driver = webdriver.Chrome(PATH, options=chrome_options)
+driver = webdriver.Chrome(resource_path("./Resources/chromedriver.exe"), options=chrome_options)
 wait = WebDriverWait(driver, 10)
 wallpaperPage = ""
 downloadName = ""
@@ -79,11 +86,11 @@ try:
         mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").click()
         time.sleep(3)
         numFiles = 0
-        for path in os.listdir(os.getcwd() + "\\Resources"):
-            numFiles += 1
-        if numFiles == 1:
+
+        if not os.path.exists(os.getcwd() + r"\\" + downloadName):
             cont = True
             driver.refresh()
+
 except Exception as e:
     print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")
 
@@ -92,7 +99,7 @@ finally:
     driver.quit()
 
 # Set the wallpaper as desktop background
-WALLPAPER_PATH = os.getcwd() + "\Resources\\" + downloadName
+WALLPAPER_PATH = os.getcwd() + r"\\" + downloadName
 ctypes.windll.user32.SystemParametersInfoW(20, 0, WALLPAPER_PATH , 3)
 
 # Remove wallpaper from folder
