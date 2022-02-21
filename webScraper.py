@@ -12,9 +12,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 #Setting download folder
 chrome_options = webdriver.ChromeOptions()
-prefs = {'download.default_directory' : os.getcwd()}
-chrome_options.add_experimental_option('prefs', prefs)
-chrome_options.add_argument("--disable-notifications")
+chrome_options.add_argument("headless")
+chrome_options.add_experimental_option("prefs", {
+    "download.prompt_for_download": False,
+})
 
 #Creating a path where the chromedriver resource is
 def resource_path(relative_path):
@@ -24,10 +25,18 @@ def resource_path(relative_path):
         base_path = os.path.dirname(__file__)
     return os.path.join(base_path, relative_path)
 
+# function to take care of downloading file
+def enable_download_headless(browser,download_dir):
+    browser.command_executor._commands["send_command"] = ("POST", '/session/$sessionId/chromium/send_command')
+    params = {'cmd':'Page.setDownloadBehavior', 'params': {'behavior': 'allow', 'downloadPath': download_dir}}
+    browser.execute("send_command", params)
+
+
 # Setting important variables
 PATH = os.getcwd() + r"chromedriver.exe"
 s = Service(PATH)
 driver = webdriver.Chrome(resource_path("./Resources/chromedriver.exe"), options=chrome_options)
+enable_download_headless(driver, os.path.expanduser("~")+"\\Downloads\\")
 wait = WebDriverWait(driver, 10)
 wallpaperPage = ""
 downloadName = ""
@@ -78,18 +87,18 @@ try:
     while(cont):
         cont = False
         mainDiv = wait.until(
-            EC.presence_of_element_located((By.XPATH, "//div[@class='nav-btn']"))
+            EC.element_to_be_clickable((By.XPATH, "//a[contains (@class, 'icon download')]"))
             )
 
         # Downloading the wallpaper
         downloadName = mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").get_attribute("download")
         mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").click()
         time.sleep(3)
-        numFiles = 0
 
-        if not os.path.exists(os.getcwd() + r"\\" + downloadName):
+        if not os.path.exists(os.path.expanduser("~")+"\\Downloads\\" + downloadName):
             cont = True
             driver.refresh()
+
 
 except Exception as e:
     print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")
@@ -99,7 +108,7 @@ finally:
     driver.quit()
 
 # Set the wallpaper as desktop background
-WALLPAPER_PATH = os.getcwd() + r"\\" + downloadName
+WALLPAPER_PATH = os.path.expanduser("~")+"\\Downloads\\" + downloadName
 ctypes.windll.user32.SystemParametersInfoW(20, 0, WALLPAPER_PATH , 3)
 
 # Remove wallpaper from folder
