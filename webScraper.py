@@ -1,5 +1,6 @@
 # Imports
 import os
+import sys
 import time
 import random as rand
 import ctypes
@@ -13,6 +14,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 #Setting download folder
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("headless")
+chrome_options.add_argument('--ignore-certificate-errors')
+chrome_options.add_argument('--ignore-ssl-errors')
 chrome_options.add_experimental_option("prefs", {
     "download.prompt_for_download": False,
 })
@@ -33,9 +36,8 @@ def enable_download_headless(browser,download_dir):
 
 
 # Setting important variables
-PATH = os.getcwd() + r"chromedriver.exe"
-s = Service(PATH)
-driver = webdriver.Chrome(resource_path("./Resources/chromedriver.exe"), options=chrome_options)
+s = Service(executable_path=".\Resources\chromedriver.exe")
+driver = webdriver.Chrome(service=s, options=chrome_options)
 enable_download_headless(driver, os.path.expanduser("~")+"\\Downloads\\")
 wait = WebDriverWait(driver, 10)
 wallpaperPage = ""
@@ -51,14 +53,14 @@ try:
     )
 
     # Getting all the wallpapers into a list
-    wallpaperOptions = mainList.find_elements_by_tag_name("li")
+    wallpaperOptions = mainList.find_elements(By.TAG_NAME, "li")
 
     # Randomly selecting a wallpaper
     wallpaper = wallpaperOptions[rand.randrange(len(wallpaperOptions))]
     print("Selecting Wallpaper #{0}".format(rand.randrange(len(wallpaperOptions))))
 
     #Getting the link to the wallpaper page
-    wallpaperPage = wallpaper.find_element_by_tag_name("a").get_attribute("href")
+    wallpaperPage = wallpaper.find_element(By.TAG_NAME, "a").get_attribute("href")
 
 except Exception as e:
     print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")
@@ -69,11 +71,11 @@ driver.get(wallpaperPage)
 # Waiting until the page is loaded up
 try:
     mainDiv = wait.until(
-        EC.presence_of_element_located((By.XPATH, "//div[@class='clearfix']"))
+        EC.presence_of_element_located((By.CLASS_NAME, "solo"))
     )
 
     # Getting the link to the full screen wallpaper page
-    fullScreenView = mainDiv.find_element_by_tag_name("a").get_attribute("href")
+    fullScreenView = mainDiv.find_element(By.TAG_NAME, "a").get_attribute("href")
 
 except Exception as e:
     print(f"{type(e).__name__} at line {e.__traceback__.tb_lineno} of {__file__}: {e}")
@@ -91,8 +93,13 @@ try:
             )
 
         # Downloading the wallpaper
-        downloadName = mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").get_attribute("download")
         mainDiv.find_element(By.XPATH, "//a[contains (@class, 'icon download')]").click()
+        dlDiv = wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains (@class, 'dlbox')]"))
+            )
+        downloadName = dlDiv.find_elements(By.TAG_NAME, "a")[0].get_attribute("download")
+        print(downloadName)
+        dlDiv.find_elements(By.TAG_NAME, "a")[0].click()
         time.sleep(3)
 
         if not os.path.exists(os.path.expanduser("~")+"\\Downloads\\" + downloadName):
@@ -106,6 +113,7 @@ except Exception as e:
 finally:
     # Close the webpage
     driver.quit()
+
 
 # Set the wallpaper as desktop background
 WALLPAPER_PATH = os.path.expanduser("~")+"\\Downloads\\" + downloadName
