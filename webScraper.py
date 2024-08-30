@@ -1,13 +1,14 @@
 # Imports
+import ctypes
 import os
+import random as rand
 import sys
 import time
-import random as rand
-import ctypes
+
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -36,8 +37,9 @@ def enable_download_headless(browser,download_dir):
 
 
 # Setting important variables
-s = Service(executable_path=".\Resources\chromedriver.exe")
+s = Service(executable_path="..\Resources\chromedriver.exe")
 driver = webdriver.Chrome(service=s, options=chrome_options)
+
 enable_download_headless(driver, os.path.expanduser("~")+"\\Downloads\\")
 wait = WebDriverWait(driver, 10)
 wallpaperPage = ""
