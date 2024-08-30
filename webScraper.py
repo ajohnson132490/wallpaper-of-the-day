@@ -37,7 +37,7 @@ def enable_download_headless(browser,download_dir):
 
 
 # Setting important variables
-s = Service(executable_path="..\Resources\chromedriver.exe")
+s = Service(resource_path(".\Resources\chromedriver.exe"))
 driver = webdriver.Chrome(service=s, options=chrome_options)
 
 enable_download_headless(driver, os.path.expanduser("~")+"\\Downloads\\")
